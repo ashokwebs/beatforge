@@ -1,5 +1,8 @@
 # 🎧 BeatForge — Autonomous AI Music Studio & Audio DSP Workstation
 
+**Live Studio:** [https://beatforge-omega.vercel.app](https://beatforge-omega.vercel.app)  
+**Repository:** [https://github.com/ashokwebs/beatforge](https://github.com/ashokwebs/beatforge)  
+
 BeatForge is a generative music composition and audio synthesis platform for creators, video editors, and game developers. It synthesizes original, copyright-free instrumental tracks and renders vertical (9:16) audio visualizer video reels in seconds.
 
 ---
