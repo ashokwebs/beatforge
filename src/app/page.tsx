@@ -10,6 +10,8 @@ interface GeneratedTrack {
   bars: number;
   audioUrl?: string;
   videoUrl?: string;
+  midiUrl?: string;
+  prompt?: string;
   durationSec: number;
   scale: string;
   stems: string[];
@@ -19,6 +21,7 @@ export default function Home() {
   const [genre, setGenre] = useState<"lofi" | "synthwave">("lofi");
   const [bpm, setBpm] = useState(82);
   const [bars, setBars] = useState(8);
+  const [prompt, setPrompt] = useState("");
   const [generating, setGenerating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [track, setTrack] = useState<GeneratedTrack | null>({
@@ -31,14 +34,15 @@ export default function Home() {
     stems: ["808 Low-End Bass", "Boom-Bap Snare & Swung Hats", "Warm Poly-Detuned Keys", "Vinyl Surface Crackle"],
   });
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (customPrompt?: string | React.MouseEvent) => {
     setGenerating(true);
     setIsPlaying(false);
     try {
+      const activePrompt = typeof customPrompt === "string" ? customPrompt : prompt;
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ genre, bpm, bars }),
+        body: JSON.stringify({ genre, bpm, bars, prompt: activePrompt }),
       });
       const data = await res.json();
       if (data.success) {
@@ -104,6 +108,55 @@ export default function Home() {
 
         {/* Master Console Panel */}
         <div className="bg-[#0E1322] border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl space-y-8">
+          {/* AI Natural Language Prompt Input */}
+          <div className="bg-[#090C15] border border-slate-800/80 rounded-xl p-4 sm:p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-rose-400" /> MusicMind AI Text-to-Music Prompt
+              </label>
+              <span className="text-[11px] text-slate-400 font-mono">Natural Language DSP Composer</span>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="e.g. Cyberpunk neon night drive 128 bpm in C minor with rolling 808 bass"
+                className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition"
+              />
+              <button
+                type="button"
+                onClick={() => handleGenerate()}
+                disabled={generating}
+                className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-violet-600 hover:from-rose-500 hover:to-violet-500 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+              >
+                {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                <span>Compose AI Track</span>
+              </button>
+            </div>
+            {/* Quick Inspiration Chips */}
+            <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px]">
+              <span className="text-slate-500">Presets:</span>
+              {[
+                "Lofi chill study beat in D minor with 808 bass at 84 bpm",
+                "Cyberpunk neon night drive 128 bpm in C minor with rolling bass",
+                "Ambient floating meditation pad in F major at 65 bpm"
+              ].map((p, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setPrompt(p);
+                    handleGenerate(p);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700/50 transition font-mono text-[10px]"
+                >
+                  {p.split(" ")[0]} {p.split(" ")[1]}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Genre & Controls Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6 border-b border-slate-800/80">
             {/* Genre Select */}
@@ -263,16 +316,40 @@ export default function Home() {
 
               {/* Export Links */}
               <div className="flex flex-wrap items-center justify-between pt-4 border-t border-slate-800/80 gap-3 text-xs">
-                <span className="text-slate-500 font-mono text-[11px]">Ready for YouTube Shorts, Reels, Spotify</span>
-                <div className="flex gap-2">
+                <span className="text-slate-500 font-mono text-[11px]">Ready for Ableton, FL Studio, YouTube Shorts, Reels</span>
+                <div className="flex flex-wrap gap-2">
                   <button
-                    onClick={() => alert("WAV audio rendered locally! Run 'beatforge generate' to export directly to disk.")}
+                    onClick={() => {
+                      if (track.midiUrl) {
+                        window.open(track.midiUrl, "_blank");
+                      } else {
+                        alert("MIDI track generated! Run 'musicmind <prompt>' to export DAW-ready Type 1 MIDI.");
+                      }
+                    }}
+                    className="px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-300 rounded-xl font-medium flex items-center gap-1.5 transition"
+                  >
+                    <Disc className="w-3.5 h-3.5 text-indigo-400" /> Export Type-1 MIDI
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (track.audioUrl) {
+                        window.open(track.audioUrl, "_blank");
+                      } else {
+                        alert("WAV audio rendered locally! Run 'musicmind <prompt>' to export directly to disk.");
+                      }
+                    }}
                     className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium flex items-center gap-1.5 transition"
                   >
                     <Download className="w-3.5 h-3.5 text-rose-400" /> Export WAV Audio
                   </button>
                   <button
-                    onClick={() => alert("Vertical reel MP4 rendered locally! Run 'beatforge generate --video' to export.")}
+                    onClick={() => {
+                      if (track.videoUrl) {
+                        window.open(track.videoUrl, "_blank");
+                      } else {
+                        alert("Vertical reel MP4 rendered locally! Run 'musicmind <prompt> --video' to export.");
+                      }
+                    }}
                     className="px-4 py-2 bg-rose-600/20 hover:bg-rose-600/30 border border-rose-500/40 text-rose-300 rounded-xl font-medium flex items-center gap-1.5 transition"
                   >
                     <Video className="w-3.5 h-3.5 text-rose-400" /> 9:16 Video Reel
